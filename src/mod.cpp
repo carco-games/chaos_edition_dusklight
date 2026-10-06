@@ -1,5 +1,6 @@
 #include "context.hpp"
 #include "handler/handler.hpp"
+#include "handler/hooks/color_hooks.hpp"
 
 DEFINE_MOD();
 
@@ -15,6 +16,7 @@ MOD_EXPORT ModResult mod_initialize(ModError* error) {
 }
 
 MOD_EXPORT ModResult mod_update(ModError*) {
+    g_handler.getHooksHandler()->getColorHooks()->update();
     return MOD_OK;
 }
 

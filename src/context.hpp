@@ -121,7 +121,7 @@
     X(ExplodeEnemies, bool, false)
 
 #define EFFECT_SETTINGS(X)              \
-    X(FastLinkSpeed, int64_t, 2)        \
+    X(FastLinkSpeed, int64_t, 3)        \
     X(DamageRouletteOdds, int64_t, 50)  \
     X(TinyLinkScale, int64_t, 3)        \
     X(BigLinkScale, int64_t, 3)         \

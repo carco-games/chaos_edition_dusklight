@@ -20,6 +20,22 @@ add_subdirectory("${DUSKLIGHT_DIR}/sdk" dusklight-sdk EXCLUDE_FROM_ALL)
 
 configure_file(mod.json.in "${CMAKE_CURRENT_BINARY_DIR}/mod.json" @ONLY NEWLINE_STYLE LF)
 
+include(FetchContent)
+
+message(STATUS "chaos_edition: Fetching xxhash")
+FetchContent_Declare(
+        xxhash
+        GIT_REPOSITORY https://github.com/Cyan4973/xxHash.git
+        GIT_TAG        v0.8.3
+        SOURCE_SUBDIR  cmake_unofficial
+)
+
+# Prevent building extra xxhash artifacts
+set(XXHASH_BUILD_XXHSUM OFF CACHE BOOL "" FORCE)
+option(BUILD_SHARED_LIBS "Build shared libs" OFF)
+
+FetchContent_MakeAvailable(xxhash)
+
 add_mod(chaos_edition
         FEATURES game fmt          # remove for service/asset-only mods; add webgpu for GfxService
         SOURCES
@@ -27,9 +43,14 @@ add_mod(chaos_edition
             src/handler/handler.cpp
             src/handler/config/config.cpp
             src/handler/hooks/hooks.cpp
+            src/handler/hooks/color_hooks.cpp
+            src/handler/hooks/color_utils.cpp
+            src/handler/hooks/texture_utils.cpp
             src/handler/ui/ui.cpp
         MOD_JSON "${CMAKE_CURRENT_BINARY_DIR}/mod.json"
 )
+
+target_link_libraries(chaos_edition PRIVATE xxHash::xxhash)
 
 # For Faster Testing
 add_custom_target(copy_mod ALL

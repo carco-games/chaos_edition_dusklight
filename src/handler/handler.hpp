@@ -6,6 +6,7 @@
 class Handler {
 public:
     ModResult initialize(ModError* error);
+    HooksHandler* getHooksHandler() { return &hooksHandler; }
 private:
     ConfigHandler configHandler;
     HooksHandler hooksHandler;
