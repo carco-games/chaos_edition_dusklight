@@ -3,6 +3,10 @@
 #include "../../context.hpp"
 #include "../config/config.hpp"
 #include "mods/svc/hook.hpp"
+#include "texture_utils.hpp"
+#include <cstdlib>
+#include <xxhash.h>
+#include <ranges>
 #include <gx.h>
 
 class ColorHooks {
@@ -36,5 +40,7 @@ public:
     void update();
 private:
     ConfigHandler* configHandler;
+    bool randomizeColors;
+    bool isRandomColorsActive;
     MidnaHairColors midnaHairColors;
 };

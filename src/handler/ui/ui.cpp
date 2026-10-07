@@ -166,10 +166,10 @@ ModResult buildEffSettingsTab(ModContext*, UiWindowHandle, UiElementHandle left,
     ADD_NUMBER_CONTROL("Damage Roulette Odds", "Odds for 'Damage Roulette' effect to heal", GET_CVAR(g_ui, DamageRouletteOdds), 1, 100,
                        "Error adding Damage Roulette Odds control");
 
-    ADD_NUMBER_CONTROL("Tiny Link Scale", "Scale for 'Tiny Link' effect", GET_CVAR(g_ui, TinyLinkScale), 1, 5,
+    ADD_NUMBER_CONTROL("Tiny Link Scale", "Scale for 'Tiny Link' effect", GET_CVAR(g_ui, TinyLinkScale), 1, 100,
                        "Error adding Tiny Link Scale control");
 
-    ADD_NUMBER_CONTROL("Big Link Scale", "Scale for 'Big Link' effect", GET_CVAR(g_ui, BigLinkScale), 1, 5,
+    ADD_NUMBER_CONTROL("Big Link Scale", "Scale for 'Big Link' effect", GET_CVAR(g_ui, BigLinkScale), 1, 100,
                        "Error adding Big Link Scale control");
 
     ADD_NUMBER_CONTROL("Slippery Scale", "Scale for 'Slippery' effect", GET_CVAR(g_ui, SlipperyScale), 1, 5,

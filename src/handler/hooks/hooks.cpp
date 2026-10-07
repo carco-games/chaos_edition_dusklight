@@ -1,6 +1,7 @@
 #include "hooks.hpp"
 #include "color_hooks.hpp"
 #include "d/actor/d_a_alink.h"
+#include "d/d_camera.h"
 
 IMPORT_SERVICE(HookService, svc_hook);
 
@@ -10,6 +11,11 @@ DEFINE_HOOK(&daAlink_c::draw, LinkDraw);
 DEFINE_HOOK(&daAlink_c::procMove, LinkProcMove);
 DEFINE_HOOK(&daAlink_c::procFrontRollInit, LinkFrontRollInit);
 DEFINE_HOOK(&daAlink_c::damageMagnification, LinkDamageMagnification);
+DEFINE_HOOK(&daAlink_c::setDamagePoint, SetDamagePoint);
+DEFINE_HOOK(&daAlink_c::modelCallBack, SetMatrix);
+DEFINE_HOOK(&daAlink_c::setIceSlipSpeed, SetIceSlipSpeed);
+DEFINE_HOOK(&daAlink_c::execute, Execute);
+DEFINE_HOOK(&dCamera_c::Run, ChaseCamera);
 
 // Fast Link
 void onProcMove(ModContext*, void* args, void*, void*) {
@@ -115,7 +121,110 @@ HookAction onDamageMagnification(ModContext*, void* args, void* retval, void*) {
     return HOOK_SKIP_ORIGINAL;
 }
 
+// Damage Roulette
+void onSetDamagePoint(ModContext*, void* args, void* retval, void*) {
+    if (GET_CVAR_VALUE(g_hooks, DamageRoulette) == false) {
+        return;
+    }
 
+    static std::mt19937 rng{std::random_device{}()};
+    if (std::uniform_int_distribution<>(1, 100)(rng) <= GET_CVAR_VALUE(g_hooks, DamageRouletteOdds)) {
+        int i_dmgAmount = mods::arg<int>(args, 1);
+        if (i_dmgAmount > 0) {
+            dComIfGp_setItemLifeCount(i_dmgAmount * 2, 0);
+        }
+    }
+}
+
+// Tiny / Big Link
+void onSetMatrix(ModContext*, void* args, void*, void*) {
+    if (GET_CVAR_VALUE(g_hooks, TinyLink) == false && GET_CVAR_VALUE(g_hooks, BigLink) == false) {
+        return;
+    }
+
+    daAlink_c* link = mods::arg<daAlink_c*>(args, 0);
+    int i_jointNo = mods::arg<int>(args, 1);
+    f32 scale;
+    if (GET_CVAR_VALUE(g_hooks, TinyLink) == true) {
+        scale = 0.7f / GET_CVAR_VALUE(g_hooks, TinyLinkScale);
+    } else if (GET_CVAR_VALUE(g_hooks, BigLink) == true) {
+        scale = 1.2f * GET_CVAR_VALUE(g_hooks, BigLinkScale);
+    }
+
+    MtxP mtx = link->mpLinkModel->getAnmMtx(i_jointNo);
+    mDoMtx_stack_c::copy(mtx);
+    mDoMtx_stack_c::scaleM(scale, scale, scale);
+    cMtx_copy(mDoMtx_stack_c::get(), mtx);
+}
+
+// Arthritis
+int64_t g_damageTimer = 0;
+void onExecute(ModContext*, void* args, void*, void*) {
+    if (GET_CVAR_VALUE(g_hooks, Arthritis) == false) {
+        return;
+    }
+
+
+    daAlink_c* link = mods::arg<daAlink_c*>(args, 0);
+    if (link->speed.x >= 15.0f || link->speed.x <= -15.0f || link->speed.z >= 15.0f || link->speed.z <= -15.0f) {
+        if (g_damageTimer == 0) {
+            link->setDamagePoint(1, FALSE, FALSE, 0);
+            g_damageTimer = 60;
+        }
+    }
+
+    if (g_damageTimer != 0) {
+        g_damageTimer--;
+    }
+}
+
+// Slippery
+HookAction onSetIceSlipSpeed(ModContext*, void* args, void*, void*) {
+    if (GET_CVAR_VALUE(g_hooks, Slippery) == false) {
+        return HOOK_CONTINUE;
+    }
+
+    daAlink_c* link = mods::arg<daAlink_c*>(args, 0);
+    f32 var_f31, var_f30, var_f29;
+    if (link->checkWolf()) {
+        var_f31 = 0.1f;
+        var_f30 = 1.0f;
+        var_f29 = 0.5f;
+    } else {
+        var_f31 = 0.03f;
+        var_f30 = 0.5f;
+        var_f29 = 0.75f;
+    }
+
+    cLib_addCalc(&link->field_0x35c4.x, 0.0f, var_f31, 100.0f, var_f30);
+    cLib_addCalc(&link->field_0x35c4.z, 0.0f, var_f31, 100.0f, var_f30);
+
+    cXyz sp58 = link->field_0x3528 - link->speed;
+    f32 var_f28 = sp58.absXZ();
+    if (var_f28 > 30.0f) {
+        sp58 *= 30.0f / var_f28;
+    }
+
+    link->field_0x35c4 += sp58 * var_f29;
+    link->speed += (sp58 * (1.0f - var_f29)) * GET_CVAR_VALUE(g_hooks, SlipperyScale);
+
+    if (link->mProcVar4.field_0x3010 != 0 && (link->mProcID == daAlink_c::PROC_LARGE_DAMAGE_UP || link->mProcID == daAlink_c::PROC_WOLF_LARGE_DAMAGE_UP)) {
+        sp58.normalizeZP();
+        link->field_0x35c4 += sp58 * 20.0f;
+    }
+
+    return HOOK_SKIP_ORIGINAL;
+}
+
+// Zoom Out
+void onChaseCamera(ModContext*, void* args, void*, void*) {
+    if (GET_CVAR_VALUE(g_hooks, ZoomOut) == false) {
+        return;
+    }
+
+    dCamera_c* camera = mods::arg<dCamera_c*>(args, 0);
+    camera->mEye.z *= 1.01f * (GET_CVAR_VALUE(g_hooks, ZoomOutPercent) / 100.0f);
+}
 
 ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* error) {
     configHandler = config_handler;
@@ -128,6 +237,11 @@ ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* erro
     POST_HOOK(LinkProcMove, onProcMove, "Failed to hook daAlink_c::procMove");
     REPLACE_HOOK(LinkFrontRollInit, onProcFrontRollInit, "Failed to hook daAlink_c::procFrontRollInit");
     PRE_HOOK(LinkDamageMagnification, onDamageMagnification, "Failed to hook daAlink_c::damageMagnification");
+    POST_HOOK(SetDamagePoint, onSetDamagePoint, "Failed to hook daAlink_c::setDamagePoint");
+    POST_HOOK(SetMatrix, onSetMatrix, "Failed to hook daAlink_c::setMatrix");
+    PRE_HOOK(SetIceSlipSpeed, onSetIceSlipSpeed, "Failed to hook daAlink_c::setIceSlipSpeed");
+    POST_HOOK(Execute, onExecute, "Failed to hook daAlink_c::execute");
+    POST_HOOK(ChaseCamera, onChaseCamera, "Failed to hook dCamera_c::chaseCamera");
 
     return result;
 }

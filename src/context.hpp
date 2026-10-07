@@ -3,6 +3,7 @@
 #include "mods/service.hpp"
 #include "mods/svc/log.hpp"
 #include <variant>
+#include <random>
 
 #define INITIALIZE(handler)                                         \
     result = handler.initialize(error);                             \
@@ -123,9 +124,9 @@
 #define EFFECT_SETTINGS(X)              \
     X(FastLinkSpeed, int64_t, 3)        \
     X(DamageRouletteOdds, int64_t, 50)  \
-    X(TinyLinkScale, int64_t, 3)        \
-    X(BigLinkScale, int64_t, 3)         \
-    X(SlipperyScale, int64_t, 1)        \
+    X(TinyLinkScale, int64_t, 5)        \
+    X(BigLinkScale, int64_t, 5)         \
+    X(SlipperyScale, int64_t, 2)        \
     X(ZoomOutPercent, int64_t, 75)      \
     X(HealthDrainTimer, int64_t, 60)    \
     X(SpinSpeed, int64_t, 1)            \

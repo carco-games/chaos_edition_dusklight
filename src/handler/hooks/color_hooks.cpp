@@ -1,30 +1,36 @@
 #include "color_hooks.hpp"
 #include "hooks.hpp"
 #include "d/actor/d_a_midna.h"
-#include "texture_utils.hpp"
-#include <cstdlib>
-#include <xxhash.h>
-#include <ranges>
 
 ColorHooks* g_color;
 
 IMPORT_SERVICE(TextureService, svc_texture);
 
 // Random Color Helpers
+std::mt19937& get_rng() {
+    static std::mt19937 rng{std::random_device{}()};
+    return rng;
+}
+
+u8 random_u8() {
+    static std::uniform_int_distribution<int> dist(0, 255);
+    return static_cast<u8>(dist(get_rng()));
+}
+
 GXColor randomColor() {
     return {
-        static_cast<u8>(std::rand() % 256),
-        static_cast<u8>(std::rand() % 256),
-        static_cast<u8>(std::rand() % 256),
+        random_u8(),
+        random_u8(),
+        random_u8(),
         0
     };
 }
 
 GXColorS10 randomColorS10() {
     return {
-        static_cast<s16>(std::rand() % 256),
-        static_cast<s16>(std::rand() % 256),
-        static_cast<s16>(std::rand() % 256),
+        static_cast<s16>(random_u8()),
+        static_cast<s16>(random_u8()),
+        static_cast<s16>(random_u8()),
         0
     };
 }
@@ -149,6 +155,7 @@ void onMidnaSetBodyPartMatrixPost(ModContext*, void* args, void* retval, void* u
 bool g_loadedAllBaseTextures = false;
 constexpr uint32_t kTextureLoadRetryFrames = 30;
 uint32_t g_textureLoadRetryCountdown = 0;
+uint32_t g_loadedTexturesCount = 0;
 void load_base_texture_data() {
     // Go through each texture we can recolor and attempt to load and store
     // the texture data for future recoloring
@@ -212,6 +219,7 @@ void load_base_texture_data() {
                     mods::log::debug("Loaded base texture data for {}. size: {:X} hash: {:X}",
                         replacement.textureName, size, textureHash);
                     replacement.loadedTextureData = true;
+                    g_loadedTexturesCount++;
 
                     data.width = imageHeader->width;
                     data.height = imageHeader->height;
@@ -225,8 +233,7 @@ void load_base_texture_data() {
         }
     }
 
-    // If we've loaded all base textures for recoloring, then we don't need to call this function
-    // again
+    // If we've loaded all base textures for recoloring, then we don't need to call this function again
     g_loadedAllBaseTextures = std::ranges::all_of(
         get_texture_replacements(),
         [](const TextureReplacementData& replacement) {
@@ -234,12 +241,65 @@ void load_base_texture_data() {
         });
 }
 
+ModResult check_and_set_recolored_textures() {
+    for (auto& replacement : get_texture_replacements()) {
+        // If we haven't loaded the base texture yet, don't try to recolor it
+        if (!replacement.loadedTextureData) {
+            continue;
+        }
+
+        // If our color hasn't changed, don't try to recolor
+        auto color = randomColor();
+        auto& curColor = replacement.curColor;
+        if (curColor == std::nullopt || curColor.value().r != color.r ||
+            curColor.value().g != color.g || curColor.value().b != color.b)
+        {
+            // Make a copy of the base texture data to recolor
+            auto newTexture = replacement.baseTextureData;
+            recolor_texture(replacement, color, newTexture);
+
+            TextureData newTextureData = replacement.data;
+            newTextureData.data = newTexture.data();
+            newTextureData.size = newTexture.size();
+
+            // Keep the current replacement active if registering the new one fails.
+            TextureReplacementHandle newHandle{};
+            auto result = svc_texture->register_data(
+                mod_ctx, &replacement.key, &newTextureData, &newHandle);
+            if (result != MOD_OK) {
+                mods::log::debug("Could not register_data for {}. Result: {}",
+                    replacement.textureName, static_cast<int>(result));
+            } else {
+                mods::log::debug("Registered replacement for {}.", replacement.textureName,
+                    static_cast<int>(result));
+                auto oldHandle = replacement.handle;
+                replacement.handle = newHandle;
+                curColor = color;
+
+                if (oldHandle != 0) {
+                    result = svc_texture->unregister(mod_ctx, oldHandle);
+                    if (result != MOD_OK) {
+                        mods::log::debug(
+                            "Could not unregister previous replacement for {}. Result: {}",
+                            replacement.textureName, static_cast<int>(result));
+                    }
+                }
+            }
+        }
+    }
+
+    return MOD_OK;
+}
+
+bool g_curRandoColorState;
+bool g_prevRandoColorState;
 
 ModResult ColorHooks::initialize(ConfigHandler* config_handler, ModError* error) {
     configHandler = config_handler;
     g_color = this;
     g_loadedAllBaseTextures = false;
     g_textureLoadRetryCountdown = 0;
+    isRandomColorsActive = randomizeColors = g_prevRandoColorState = g_curRandoColorState = GET_CVAR_VALUE(g_color, RandoColors);
     ModResult result;
 
     POST_HOOK(MidnaHair::MidnaCreate, MidnaHair::onMidnaCreate, "Failed to hook daMidna_c::create");
@@ -249,7 +309,22 @@ ModResult ColorHooks::initialize(ConfigHandler* config_handler, ModError* error)
     return result;
 }
 
+void default_colors() {
+    for (auto& texture : get_texture_replacements()) {
+        svc_texture->unregister(mod_ctx, texture.handle);
+        texture.curColor.reset();
+        g_prevRandoColorState = g_curRandoColorState = GET_CVAR_VALUE(g_color, RandoColors);
+    }
+}
+
+bool g_firstRandomizeComplete = false;
 void ColorHooks::update() {
+    if (GET_CVAR_VALUE(g_color, RandoColors) == false && isRandomColorsActive) {
+        default_colors();
+        isRandomColorsActive = false;
+        return;
+    }
+
     if (!g_loadedAllBaseTextures) {
         if (g_textureLoadRetryCountdown == 0) {
             load_base_texture_data();
@@ -257,5 +332,30 @@ void ColorHooks::update() {
         } else {
             --g_textureLoadRetryCountdown;
         }
+    }
+
+    if (g_curRandoColorState != GET_CVAR_VALUE(g_color, RandoColors)) {
+        g_prevRandoColorState = g_curRandoColorState;
+        g_curRandoColorState = GET_CVAR_VALUE(g_color, RandoColors);
+    }
+
+    if (g_curRandoColorState == true && g_prevRandoColorState == false && randomizeColors == false) {
+        randomizeColors = true;
+        g_prevRandoColorState = true;
+    }
+
+    if (!g_firstRandomizeComplete) {
+        if (g_loadedTexturesCount == 16) {  // Number of randomizable textures that need to load for title screen
+            check_and_set_recolored_textures();
+            isRandomColorsActive = true;
+            g_firstRandomizeComplete = true;
+            randomizeColors = false;
+        }
+    }
+
+    if (randomizeColors && g_firstRandomizeComplete) {
+        check_and_set_recolored_textures();
+        isRandomColorsActive = true;
+        randomizeColors = false;
     }
 }
