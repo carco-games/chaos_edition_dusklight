@@ -137,6 +137,7 @@ enum ShuffleMode {
     X(SlipperyScale, int64_t, 2)        \
     X(ZoomOutPercent, int64_t, 75)      \
     X(HealthDrainTimer, int64_t, 60)    \
+    X(HealthDrainAmount, int64_t, 1)    \
     X(SpinSpeed, int64_t, 1)            \
     X(DropsDamageAmount, int64_t, 4)    \
     X(ExplodeEnemiesTimer, int64_t, 2)

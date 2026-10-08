@@ -181,6 +181,9 @@ ModResult buildEffSettingsTab(ModContext*, UiWindowHandle, UiElementHandle left,
     ADD_NUMBER_CONTROL("Health Drain Timer", "Timer (in seconds) for 'Health Drain' effect", GET_CVAR(g_ui, HealthDrainTimer), 1, 1800,
                        "Error adding Health Drain Timer control");
 
+    ADD_NUMBER_CONTROL("Health Drain Amount", "Amount of life that 'Health Drain' effect should drain", GET_CVAR(g_ui, HealthDrainAmount), 1, 80,
+                       "Error adding Health Drain Amount control");
+
     ADD_NUMBER_CONTROL("Spin Speed Scale", "Speed scale for 'Spin' effect", GET_CVAR(g_ui, SpinSpeed), 1, 5,
                        "Error adding Spin Speed Scale control");
 
