@@ -27,7 +27,10 @@ public:
     ModResult initialize(ConfigHandler* config_handler, ModError* error);
     ConfigHandler* getConfigHandler() { return configHandler; }
     ColorHooks* getColorHooks() { return colorHooks; }
+    bool getBonkShuffleReady() { return bonkShuffleReady; }
+    void setBonkShuffleReady(bool value) { bonkShuffleReady = value; }
 private:
     ConfigHandler* configHandler;
     ColorHooks* colorHooks;
+    bool bonkShuffleReady;
 };

@@ -4,6 +4,14 @@
 #include "mods/svc/log.hpp"
 #include <variant>
 #include <random>
+#include <vector>
+#include <algorithm>
+
+enum ShuffleMode {
+    /* 0x0 */ SHUFFLE_OFF,
+    /* 0x1 */ SHUFFLE_REGULAR,
+    /* 0x2 */ SHUFFLE_BONK,
+};
 
 #define INITIALIZE(handler)                                         \
     result = handler.initialize(error);                             \

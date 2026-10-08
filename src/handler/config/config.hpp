@@ -61,8 +61,13 @@ public:
         }
     }
 
+    bool getShuffle() { return shuffle; }
+    void setShuffle(bool value) { shuffle = value; }
+    void shuffleEffects();
 private:
     CHAOS_EFFECTS(EFFECT_MEMBER_CVARS);
     EFFECT_SETTINGS(MEMBER_CVARS);
     SHUFFLE_SETTINGS(MEMBER_CVARS);
+    bool shuffle;
+    std::vector<ConfigVarHandle*> validShuffleEffects;
 };

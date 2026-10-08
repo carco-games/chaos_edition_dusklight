@@ -16,6 +16,7 @@ DEFINE_HOOK(&daAlink_c::modelCallBack, SetMatrix);
 DEFINE_HOOK(&daAlink_c::setIceSlipSpeed, SetIceSlipSpeed);
 DEFINE_HOOK(&daAlink_c::execute, Execute);
 DEFINE_HOOK(&dCamera_c::Run, ChaseCamera);
+DEFINE_HOOK(&daAlink_c::procFrontRollCrashInit, ProcFrontRollCrashInit);
 
 // Fast Link
 void onProcMove(ModContext*, void* args, void*, void*) {
@@ -226,6 +227,14 @@ void onChaseCamera(ModContext*, void* args, void*, void*) {
     camera->mEye.z *= 1.01f * (GET_CVAR_VALUE(g_hooks, ZoomOutPercent) / 100.0f);
 }
 
+// Bonk Shuffle
+void onProcFrontRollCrashInit(ModContext*, void* args, void*, void*) {
+    if (g_hooks->getBonkShuffleReady()) {
+        g_hooks->getConfigHandler()->setShuffle(true);
+        g_hooks->setBonkShuffleReady(false);
+    }
+}
+
 ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* error) {
     configHandler = config_handler;
     g_hooks = this;
@@ -242,6 +251,7 @@ ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* erro
     PRE_HOOK(SetIceSlipSpeed, onSetIceSlipSpeed, "Failed to hook daAlink_c::setIceSlipSpeed");
     POST_HOOK(Execute, onExecute, "Failed to hook daAlink_c::execute");
     POST_HOOK(ChaseCamera, onChaseCamera, "Failed to hook dCamera_c::chaseCamera");
+    POST_HOOK(ProcFrontRollCrashInit, onProcFrontRollCrashInit, "Failed to hook daAlink_c::procFrontRollCrashInit");
 
     return result;
 }
