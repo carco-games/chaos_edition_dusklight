@@ -35,9 +35,10 @@ ModResult ConfigHandler::initialize(ModError* error) {
 
 #define GET_SHUFFLE_EFFECT_ENABLED(name, type, default) \
     if (get##name##Shuffle() == true) {                 \
-        validShuffleEffects.emplace_back(&name);        \
+        validShuffleEffects.emplace_back(name);         \
     }
 
+std::vector<ConfigVarHandle*> validShuffleEffects;
 void ConfigHandler::shuffleEffects() {
     validShuffleEffects.clear();
     CHAOS_EFFECTS(GET_SHUFFLE_EFFECT_ENABLED);

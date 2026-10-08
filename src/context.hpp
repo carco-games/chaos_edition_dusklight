@@ -4,8 +4,8 @@
 #include "mods/svc/log.hpp"
 #include <variant>
 #include <random>
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 enum ShuffleMode {
     /* 0x0 */ SHUFFLE_OFF,
