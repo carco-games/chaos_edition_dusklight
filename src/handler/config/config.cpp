@@ -43,6 +43,10 @@ void ConfigHandler::shuffleEffects() {
     validShuffleEffects.clear();
     CHAOS_EFFECTS(GET_SHUFFLE_EFFECT_ENABLED);
 
+    for (auto* effect : validShuffleEffects) {
+        setOption<bool>(*effect, false);
+    }
+
     std::mt19937 rng{std::random_device{}()};
     std::uniform_int_distribution<int64_t> dist(1, validShuffleEffects.size());
     int64_t numOfEffectsToEnable = dist(rng);

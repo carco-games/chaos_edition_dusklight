@@ -1,6 +1,7 @@
 #include "context.hpp"
 #include "handler/handler.hpp"
 #include "handler/hooks/color_hooks.hpp"
+#include "d/d_bomb.h"
 
 DEFINE_MOD();
 
@@ -38,7 +39,7 @@ MOD_EXPORT ModResult mod_update(ModError*) {
     }
 
     // Reset timers if needed
-    if (g_shuffleTimer == 0 || g_bonkShuffleCooldown == 0) {
+    if ((g_shuffleTimer == 0 && g_shuffleMode == SHUFFLE_REGULAR) || (g_bonkShuffleCooldown == 0 && !g_handler.getBonkShuffleReady())) {
         switch (g_shuffleMode) {
             case SHUFFLE_REGULAR:
                 if (GET_CVAR_VALUE(g_handlerP, EnableRandTimer) == true) {
@@ -51,7 +52,8 @@ MOD_EXPORT ModResult mod_update(ModError*) {
                 break;
 
             case SHUFFLE_BONK:
-                g_bonkShuffleCooldown = GET_CVAR_VALUE(g_handlerP, BonkShuffleCooldown);
+                mods::log::debug("Setting bonk shuffle cooldown");
+                g_bonkShuffleCooldown = GET_CVAR_VALUE(g_handlerP, BonkShuffleCooldown) * 30;
                 break;
         }
     }
@@ -65,8 +67,10 @@ MOD_EXPORT ModResult mod_update(ModError*) {
     }
 
     if (g_bonkShuffleCooldown != 0 && g_shuffleMode == SHUFFLE_BONK && !g_handler.getBonkShuffleReady()) {
+        mods::log::debug("Decreasing bonk shuffle timer");
         g_bonkShuffleCooldown--;
         if (g_bonkShuffleCooldown == 0) {
+            mods::log::debug("bonk shuffle ready");
             g_handler.setBonkShuffleReady(true);
         }
     }
@@ -76,7 +80,23 @@ MOD_EXPORT ModResult mod_update(ModError*) {
         g_handler.getConfigHandler()->shuffleEffects();
     }
 
+    // Check randomized colors
     g_handler.getHooksHandler()->getColorHooks()->update();
+
+    // Check exploding enemies
+    auto& explosions = g_handler.getConfigHandler()->getActiveExplosions();
+    for (auto iterator = explosions.begin(); iterator != explosions.end();) {
+        if (iterator->explosionTimer != 0) {
+            iterator->explosionTimer--;
+        }
+
+        if (iterator->explosionTimer == 0) {
+            dBomb_c::createNormalBombExplode(&iterator->explosionPos);
+            iterator = explosions.erase(iterator);
+        } else {
+            ++iterator;
+        }
+    }
     return MOD_OK;
 }
 

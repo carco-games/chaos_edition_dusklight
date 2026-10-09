@@ -2,6 +2,7 @@
 
 #include "../../context.hpp"
 #include <mods/svc/config.h>
+#include "f_op/f_op_actor.h"
 
 class ConfigHandler {
 public:
@@ -61,12 +62,31 @@ public:
         }
     }
 
+    struct EnemyExplosion {
+        cXyz explosionPos;
+        int64_t explosionTimer;
+    };
+
     bool getShuffle() { return shuffle; }
     void setShuffle(bool value) { shuffle = value; }
     void shuffleEffects();
+    void addExplosion(cXyz pos) {
+    mods::log::debug("Inside addExplosion");
+
+    auto timer = getExplodeEnemiesTimer();
+
+    mods::log::debug("Got explosion timer");
+
+    activeExplosions.emplace_back(EnemyExplosion{pos, timer});
+
+    mods::log::debug("Explosion added to vector");
+        // activeExplosions.emplace_back(EnemyExplosion{pos, getExplodeEnemiesTimer() + 120});
+    }
+    std::vector<EnemyExplosion>& getActiveExplosions() { return activeExplosions; }
 private:
     CHAOS_EFFECTS(EFFECT_MEMBER_CVARS);
     EFFECT_SETTINGS(MEMBER_CVARS);
     SHUFFLE_SETTINGS(MEMBER_CVARS);
     bool shuffle;
+    std::vector<EnemyExplosion> activeExplosions;
 };

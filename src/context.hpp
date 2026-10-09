@@ -135,12 +135,12 @@ enum ShuffleMode {
     X(TinyLinkScale, int64_t, 5)        \
     X(BigLinkScale, int64_t, 5)         \
     X(SlipperyScale, int64_t, 2)        \
-    X(ZoomOutPercent, int64_t, 75)      \
+    X(ZoomOutPercent, int64_t, 103)     \
     X(HealthDrainTimer, int64_t, 60)    \
     X(HealthDrainAmount, int64_t, 1)    \
     X(SpinSpeed, int64_t, 1)            \
     X(DropsDamageAmount, int64_t, 4)    \
-    X(ExplodeEnemiesTimer, int64_t, 2)
+    X(ExplodeEnemiesTimer, int64_t, 30)
 
 #define EFFECT_TOGGLES(X)                                                                           \
     X(FastLink, "Fast Link", "Makes Link Faster")                                                   \

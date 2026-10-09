@@ -6,6 +6,8 @@
 #include "d/actor/d_a_obj_item.h"
 #include "f_op/f_op_actor_mng.h"
 #include "d/d_bomb.h"
+#include "d/actor/d_a_disappear.h"
+#include "d/actor/d_a_e_oc.h"
 
 IMPORT_SERVICE(HookService, svc_hook);
 
@@ -20,10 +22,8 @@ DEFINE_HOOK(&daAlink_c::modelCallBack, SetMatrix);
 DEFINE_HOOK(&daAlink_c::setIceSlipSpeed, SetIceSlipSpeed);
 DEFINE_HOOK(&daAlink_c::execute, Execute);
 DEFINE_HOOK(&dCamera_c::Run, CameraRun);
-DEFINE_HOOK(mDoLib_project, Project);
 DEFINE_HOOK(&daItem_c::itemGet, ItemGet);
 DEFINE_HOOK(fopAcM_createDisappear, CreateDisappear);
-DEFINE_HOOK_SYMBOL("fopAcM_delete", s32(fopAc_ac_c*), Delete);
 DEFINE_HOOK(&daAlink_c::procFrontRollCrashInit, ProcFrontRollCrashInit);
 
 // Fast Link
@@ -244,39 +244,12 @@ void onCameraRun(ModContext*, void* args, void*, void*) {
     }
 
     dCamera_c* camera = mods::arg<dCamera_c*>(args, 0);
-    camera->mEye.z *= 1.01f * (GET_CVAR_VALUE(g_hooks, ZoomOutPercent) / 100.0f);
+    f32 scale = 1.015f;
+    scale *= ((f32)GET_CVAR_VALUE(g_hooks, ZoomOutPercent) / 100.0f);
+    camera->mEye.z *= scale;
 }
 
 // Spin
-
-
-// Vertical Flip Camera
-void onProject(ModContext*, void* args, void*, void*) {
-    if (!GET_CVAR_VALUE(g_hooks, VertFlipCamera)) {
-        return;
-    }
-
-    Vec* src = mods::arg<Vec*>(args, 1);
-    Vec* dst = mods::arg<Vec*>(args, 2);
-    Vec multVec;
-    cMtx_multVec(*dComIfGd_getProjViewMtx(), src, &multVec);
-    f32 calcFloat = (src->x * (*dComIfGd_getProjViewMtx())[3][0]) +
-                    (src->y * (*dComIfGd_getProjViewMtx())[3][1]) +
-                    (src->z * (*dComIfGd_getProjViewMtx())[3][2]) +
-                    (*dComIfGd_getProjViewMtx())[3][3];
-    view_port_class* viewPort = dComIfGd_getViewport();
-    f32 yOffset;
-    f32 ySize;
-    if (viewPort->y_orig != 0.0f) {
-        yOffset = (0.5f * ((2.0f * viewPort->y_orig) + viewPort->height)) - (int)(FB_HEIGHT / 2);
-        ySize = FB_HEIGHT;
-    } else {
-        yOffset = viewPort->y_orig;
-        ySize = viewPort->height;
-    }
-
-    dst->y = ((0.5f + (-multVec.y * (-calcFloat))) * ySize) + yOffset;
-}
 
 // Drops Damage
 void onItemGet(ModContext*, void* args, void*, void*) {
@@ -293,35 +266,14 @@ void onItemGet(ModContext*, void* args, void*, void*) {
 }
 
 // Exploding Enemies
-bool g_blockDelete;
-int64_t g_explodeTimer;
 HookAction onCreateDisappear(ModContext*, void* args, void*, void*) {
     if (!GET_CVAR_VALUE(g_hooks, ExplodeEnemies)) {
-        return HOOK_SKIP_ORIGINAL;
+        return HOOK_CONTINUE;
     }
 
-    fopAc_ac_c* i_actor = mods::arg<fopAc_ac_c*>(args, 1);
-    g_blockDelete = true;
-    g_explodeTimer = GET_CVAR_VALUE(g_hooks, ExplodeEnemiesTimer);
-    while (g_blockDelete) {
-        if (g_explodeTimer != 0) {
-            g_explodeTimer--;
-        } else {
-            dBomb_c::createNormalBombExplode(&i_actor->current.pos);
-            g_blockDelete = false;
-        }
-    }
-
+    g_hooks->getConfigHandler()->addExplosion(dComIfGp_getPlayer(0)->current.pos);
     return HOOK_CONTINUE;
 }
-
-// HookAction onDelete(ModContext*, void* args, void*, void*) {
-//     if (!GET_CVAR_VALUE(g_hooks, ExplodeEnemies)) {
-//         return HOOK_SKIP_ORIGINAL;
-//     }
-
-
-// }
 
 // Bonk Shuffle
 void onProcFrontRollCrashInit(ModContext*, void* args, void*, void*) {
@@ -350,10 +302,8 @@ ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* erro
     PRE_HOOK(SetIceSlipSpeed, onSetIceSlipSpeed, "Failed to hook daAlink_c::setIceSlipSpeed");
     POST_HOOK(Execute, onExecute, "Failed to hook daAlink_c::execute");
     POST_HOOK(CameraRun, onCameraRun, "Failed to hook dCamera_c::Run");
-    POST_HOOK(Project, onProject, "Failed to hook mDoLib_project");
     POST_HOOK(ItemGet, onItemGet, "Failed to hook daItem_c::itemGet");
     PRE_HOOK(CreateDisappear, onCreateDisappear, "Failed to hook fopAcM_createDisappear");
-    // PRE_HOOK(Delete, onDelete, "Failed to hook fopAcM_delete");
     POST_HOOK(ProcFrontRollCrashInit, onProcFrontRollCrashInit, "Failed to hook daAlink_c::procFrontRollCrashInit");
 
     return result;

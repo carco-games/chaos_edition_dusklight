@@ -84,6 +84,7 @@ ModResult buildShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left,
 }
 
 void onEnableBonkShuffleMode(ModContext*, void*) {
+    mods::log::debug("bonk shuffle enabled");
     if (GET_CVAR_VALUE(g_ui, BonkShuffleEnabled) == true) {
         SET_CVAR_VALUE(g_ui, ShuffleEnabled, false);
     }
@@ -98,10 +99,11 @@ ModResult buildBonkShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle l
     UiControlDesc control = UI_CONTROL_DESC_INIT;
     control.kind = UI_CONTROL_NUMBER;
     control.label = "Bonk Shuffle Cooldown";
-    control.help_rml = "Cooldown Timer for Bonk Shuffling";
+    control.help_rml = "Cooldown Timer (In Seconds) for Bonk Shuffling";
     control.binding = UI_BINDING_CONFIG_VAR;
     control.config_var = GET_CVAR(g_ui, BonkShuffleCooldown);
     control.min = 1;
+    control.max = 900;
     result = add_control(left, control);
     if (result != MOD_OK) {
         return mods::set_error(error, result, "Error adding Bonk Shuffle Cooldown control");
@@ -175,7 +177,7 @@ ModResult buildEffSettingsTab(ModContext*, UiWindowHandle, UiElementHandle left,
     ADD_NUMBER_CONTROL("Slippery Scale", "Scale for 'Slippery' effect", GET_CVAR(g_ui, SlipperyScale), 1, 5,
                        "Error adding Slippery Scale control");
 
-    ADD_NUMBER_CONTROL("Zoom Out Percent", "Zoom percentage for 'Zoom Out' effect", GET_CVAR(g_ui, ZoomOutPercent), 1, 100,
+    ADD_NUMBER_CONTROL("Zoom Out Percent", "Zoom percentage for 'Zoom Out' effect", GET_CVAR(g_ui, ZoomOutPercent), 100, 200,
                        "Error adding Zoom Out Percent control");
 
     ADD_NUMBER_CONTROL("Health Drain Timer", "Timer (in seconds) for 'Health Drain' effect", GET_CVAR(g_ui, HealthDrainTimer), 1, 1800,
