@@ -7,6 +7,7 @@
 #include "f_op/f_op_actor_mng.h"
 #include "d/d_bomb.h"
 #include "d/actor/d_a_disappear.h"
+#include "enemy_deaths.hpp"
 
 IMPORT_SERVICE(HookService, svc_hook);
 
@@ -24,8 +25,14 @@ DEFINE_HOOK(&dCamera_c::Run, CameraRun);
 DEFINE_HOOK(&dCamera_c::lockonCamera, LockonCamera);
 DEFINE_HOOK(&dCamera_c::CalcTrimSize, CalcTrimSize);
 DEFINE_HOOK(&daItem_c::itemGet, ItemGet);
-DEFINE_HOOK(fopAcM_createDisappear, CreateDisappear);
 DEFINE_HOOK(&daAlink_c::procFrontRollCrashInit, ProcFrontRollCrashInit);
+
+#define ENEMY_DEATH_HOOKS                                   \
+    ENEMY_DEATH_FUNCS(ENEMY_DEATH_HOOK);                    \
+    ENEMY_STATIC_DEATH_FUNCS(ENEMY_STATIC_DEATH_HOOK);      \
+    ENEMY_DEATH_FUNCS(ENEMY_DEATH_HOOK_FUNC);               \
+    ENEMY_STATIC_DEATH_FUNCS(ENEMY_STATIC_DEATH_HOOK_FUNC);
+ENEMY_DEATH_HOOKS;
 
 // Fast Link
 void onProcMove(ModContext*, void* args, void*, void*) {
@@ -35,7 +42,6 @@ void onProcMove(ModContext*, void* args, void*, void*) {
     }
 }
 
-// Replace function for front roll init. Replace is used to direclty modify roll speed inside the function.
 static std::vector<s16> possibleSpawns = {
     fpcNm_NPC_COACH_e, fpcNm_NPC_THEB_e, fpcNm_NPC_KS_e, fpcNm_NPC_ZRA_e, fpcNm_NPC_TK_e, fpcNm_NPC_WORM_e, fpcNm_NPC_TKJ2_e, fpcNm_NPC_SQ_e, fpcNm_NPC_NE_e, fpcNm_NPC_TR_e, fpcNm_NPC_LF_e,
     fpcNm_NPC_FISH_e, fpcNm_NPC_DU_e, fpcNm_NPC_GND_e, fpcNm_NPC_GRA_e, fpcNm_NPC_GRC_e, fpcNm_NPC_GRD_e, fpcNm_NPC_GRM_e, fpcNm_NPC_GRMC_e, fpcNm_NPC_GRO_e, fpcNm_NPC_GRR_e, fpcNm_NPC_GRS_e,
@@ -45,6 +51,7 @@ static std::vector<s16> possibleSpawns = {
     // finish list
 };
 
+// Replace function for front roll init. Replace is used to direclty modify roll speed inside the function.
 void onProcFrontRollInit(ModContext*, void* args, void* retval, void*) {
     daAlink_c* link = mods::arg<daAlink_c*>(args, 0);
     BOOL is_guard_anime = link->checkUpperGuardAnime();
@@ -288,8 +295,6 @@ HookAction onLockonCamera(ModContext*, void* args, void*, void*) {
     return HOOK_CONTINUE;
 }
 
-// Spin
-
 // Drops Damage
 void onItemGet(ModContext*, void* args, void*, void*) {
     if (!GET_CVAR_VALUE(g_hooks, DropsDamage)) {
@@ -304,18 +309,9 @@ void onItemGet(ModContext*, void* args, void*, void*) {
     dComIfGp_setItemLifeCount(-4.0f, 0);
 }
 
-// Exploding Enemies
-HookAction onCreateDisappear(ModContext*, void* args, void*, void*) {
-    if (!GET_CVAR_VALUE(g_hooks, ExplodeEnemies)) {
-        return HOOK_CONTINUE;
-    }
-
-    g_hooks->getConfigHandler()->addExplosion(dComIfGp_getPlayer(0)->current.pos);
-    return HOOK_CONTINUE;
-}
-
 // Bonk Shuffle
 uint32_t g_enemyID = 0;
+s16 g_spawn = 0;
 void onProcFrontRollCrashInit(ModContext*, void* args, void*, void*) {
     daAlink_c* link = mods::arg<daAlink_c*>(args, 0);
     if (g_hooks->getBonkShuffleReady()) {
@@ -323,11 +319,19 @@ void onProcFrontRollCrashInit(ModContext*, void* args, void*, void*) {
         g_hooks->setBonkShuffleReady(false);
     }
 
-    std::mt19937 rng{std::random_device{}()};
-    std::uniform_int_distribution<size_t> dist(0, possibleSpawns.size() - 1);
-    s16 randomSpawn = possibleSpawns[dist(rng)];
-    mods::log::debug("Spawning actor: {}", randomSpawn);
-    fopAcM_create(randomSpawn, 0, &link->current.pos, fopAcM_GetRoomNo(link), NULL, NULL, -1);
+    if (GET_CVAR_VALUE(g_hooks, RandoSpawns)) {
+        // std::mt19937 rng{std::random_device{}()};
+        // std::uniform_int_distribution<size_t> dist(0, possibleSpawns.size() - 1);
+        // s16 randomSpawn = possibleSpawns[dist(rng)];
+        // mods::log::debug("Spawning actor: {}", randomSpawn);
+        // fopAcM_create(randomSpawn, 0, &link->current.pos, fopAcM_GetRoomNo(link), NULL, NULL, -1);
+
+        // For testing
+        if (g_spawn < possibleSpawns.size()) {
+            fopAcM_create(possibleSpawns[g_spawn], 0, &link->current.pos, fopAcM_GetRoomNo(link), NULL, NULL, -1);
+            g_spawn++;
+        }
+    }
 }
 
 ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* error) {
@@ -352,8 +356,8 @@ ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* erro
     PRE_HOOK(LockonCamera, onLockonCamera, "Failed to hook dCamera_c::lockonCamera");
     PRE_HOOK(CalcTrimSize, onLockonCamera, "Failed to hook dCamera_c::CalcTrimSize");
     POST_HOOK(ItemGet, onItemGet, "Failed to hook daItem_c::itemGet");
-    PRE_HOOK(CreateDisappear, onCreateDisappear, "Failed to hook fopAcM_createDisappear");
     POST_HOOK(ProcFrontRollCrashInit, onProcFrontRollCrashInit, "Failed to hook daAlink_c::procFrontRollCrashInit");
+    ADD_ENEMY_DEATH_HOOKS;
 
     return result;
 }

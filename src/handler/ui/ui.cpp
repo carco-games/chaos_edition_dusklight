@@ -200,6 +200,9 @@ ModResult buildEffSettingsTab(ModContext*, UiWindowHandle, UiElementHandle left,
     ADD_NUMBER_CONTROL("Exploding Enemies Timer", "Timer (in seconds) for 'Exploding Enemies' effect", GET_CVAR(g_ui, ExplodeEnemiesTimer), 1, 120,
                        "Error adding Exploding Enemies Timer control");
 
+    ADD_NUMBER_CONTROL("Random Spawns Chance", "Chance for a random NPC to spawn when Link rolls", GET_CVAR(g_ui, RandoSpawnsChance), 1, 100,
+                       "Error adding Random Spawns Chance control");
+
     return result;
 }
 

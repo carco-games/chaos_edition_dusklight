@@ -141,7 +141,8 @@ enum ShuffleMode {
     X(HealthDrainTimer, int64_t, 60)    \
     X(HealthDrainAmount, int64_t, 1)    \
     X(DropsDamageAmount, int64_t, 4)    \
-    X(ExplodeEnemiesTimer, int64_t, 30)
+    X(ExplodeEnemiesTimer, int64_t, 30) \
+    X(RandoSpawnsChance, int64_t, 15)   \
 
 #define EFFECT_TOGGLES(X)                                                                           \
     X(FastLink, "Fast Link", "Makes Link Faster")                                                   \
@@ -158,7 +159,7 @@ enum ShuffleMode {
     X(HealthDrain, "Health Drain", "Link loses health over time")                                   \
     X(DropsDamage, "Drops Damage", "Item drops damage Link")                                        \
     X(ExplodeEnemies, "Exploding Enemies", "Enemies explode after being defeated")                  \
-    X(RandoSpawns, "Random Spawns", "Actors (not enemies) will randomly spawn where Link is")
+    X(RandoSpawns, "Random Spawns", "Random NPC will spawn when Link rolls")
 
 #define SHUFFLE_SETTINGS(X)                 \
     X(ShuffleEnabled, bool, false)          \
