@@ -64,6 +64,21 @@ void ConfigHandler::shuffleEffects() {
         }
     }
 
+    // If both Fast Link and Arthritis are enabled, randomly disable one of them
+    if (getFastLink() && getArthritis()) {
+        std::uniform_int_distribution<int64_t> disableDist(0, 1);
+        int64_t disable = disableDist(rng);
+        switch (disable) {
+            case 0:
+                setCvarFastLink(false);
+                break;
+
+            case 1:
+                setCvarArthritis(false);
+                break;
+        }
+    }
+
     // If both Tiny and Big Link are enabled, randomly disable one of them
     if (getTinyLink() && getBigLink()) {
         std::uniform_int_distribution<int64_t> disableDist(0, 1);
@@ -75,6 +90,21 @@ void ConfigHandler::shuffleEffects() {
 
             case 1:
                 setCvarBigLink(false);
+                break;
+        }
+    }
+
+    // If both Zoom Out and Top-Down are enabled, randomly disable one of them
+    if (getZoomOut() && getTopDown()) {
+        std::uniform_int_distribution<int64_t> disableDist(0, 1);
+        int64_t disable = disableDist(rng);
+        switch (disable) {
+            case 0:
+                setCvarZoomOut(false);
+                break;
+
+            case 1:
+                setCvarTopDown(false);
                 break;
         }
     }

@@ -6,6 +6,7 @@
 #include <random>
 #include <algorithm>
 #include <vector>
+#include <utility>
 
 enum ShuffleMode {
     /* 0x0 */ SHUFFLE_OFF,
@@ -123,22 +124,22 @@ enum ShuffleMode {
     X(BigLink, bool, false)         \
     X(Slippery, bool, false)        \
     X(ZoomOut, bool, false)         \
+    X(TopDown, bool, false)         \
     X(HealthDrain, bool, false)     \
-    X(Spin, bool, false)            \
-    X(VertFlipCamera, bool, false)  \
     X(DropsDamage, bool, false)     \
-    X(ExplodeEnemies, bool, false)
+    X(ExplodeEnemies, bool, false)  \
+    X(RandoSpawns, bool, false)
 
 #define EFFECT_SETTINGS(X)              \
-    X(FastLinkSpeed, int64_t, 3)        \
+    X(FastLinkSpeed, int64_t, 1)        \
     X(DamageRouletteOdds, int64_t, 50)  \
     X(TinyLinkScale, int64_t, 5)        \
     X(BigLinkScale, int64_t, 5)         \
-    X(SlipperyScale, int64_t, 2)        \
+    X(SlipperyScale, int64_t, 1)        \
     X(ZoomOutPercent, int64_t, 103)     \
+    X(TopDownPercent, int64_t, 100)     \
     X(HealthDrainTimer, int64_t, 60)    \
     X(HealthDrainAmount, int64_t, 1)    \
-    X(SpinSpeed, int64_t, 1)            \
     X(DropsDamageAmount, int64_t, 4)    \
     X(ExplodeEnemiesTimer, int64_t, 30)
 
@@ -153,11 +154,11 @@ enum ShuffleMode {
     X(BigLink, "Big Link", "Makes Link big")                                                        \
     X(Slippery, "Slippery", "Makes Link slippery")                                                  \
     X(ZoomOut, "Zoom Out", "Makes the camera zoomed out")                                           \
+    X(TopDown, "Top-Down", "Makes the camera top-down")                                             \
     X(HealthDrain, "Health Drain", "Link loses health over time")                                   \
-    X(Spin, "Spin", "Spins the camera around Link")                                                 \
-    X(VertFlipCamera, "Upside-Down Camera", "Flips the camera upside-down")                         \
     X(DropsDamage, "Drops Damage", "Item drops damage Link")                                        \
-    X(ExplodeEnemies, "Exploding Enemies", "Enemies explode after being defeated")
+    X(ExplodeEnemies, "Exploding Enemies", "Enemies explode after being defeated")                  \
+    X(RandoSpawns, "Random Spawns", "Actors (not enemies) will randomly spawn where Link is")
 
 #define SHUFFLE_SETTINGS(X)                 \
     X(ShuffleEnabled, bool, false)          \
@@ -169,22 +170,3 @@ enum ShuffleMode {
     X(BonkShuffleCooldown, int64_t, 300)    \
     X(BonkShuffleToasts, bool, false)
 // -------------------------------------------------------------------------------
-
-enum ChaosEffects {
-    /* 0x0 */ CE_SUPER_SPEED,
-    /* 0x1 */ CE_INVISIBILITY,
-    /* 0x2 */ CE_INSTA_KILLS,
-    /* 0x3 */ CE_RANDO_LINK_COLORS,
-    /* 0x4 */ CE_DAMAGE_ROULETTE,
-    /* 0x5 */ CE_ARTHRITIS,
-    /* 0x6 */ CE_TINY_LINK,
-    /* 0x7 */ CE_BIG_LINK,
-    /* 0x8 */ CE_SLIPPERY,
-    /* 0x9 */ CE_ZOOM_OUT,
-    /* 0xA */ CE_HEALTH_DRAIN,
-    /* 0xB */ CE_SPIN,
-    /* 0xC */ CE_VERT_FLIP_CAMERA,
-    /* 0xD */ CE_DAMAGE_DROPS,
-    /* 0xE */ CE_EXPLODE_ENEMIES,
-    EFFECT_COUNT
-};

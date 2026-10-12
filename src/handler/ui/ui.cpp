@@ -11,14 +11,30 @@ ModResult add_control(UiElementHandle pane, const UiControlDesc& desc) {
     return svc_ui->pane_add_control(mod_ctx, pane, &desc, nullptr);
 }
 
-ModResult add_toggle(UiElementHandle pane, const char* label, ConfigVarHandle cvar, const char* help, UiPressedFn on_press = nullptr) {
+bool isShuffleModeDisabled(ModContext*, void*) {
+    if (GET_CVAR_VALUE(g_ui, BonkShuffleEnabled) == true) {
+        return true;
+    }
+
+    return false;
+}
+
+bool isBonkShuffleModeDisabled(ModContext*, void*) {
+    if (GET_CVAR_VALUE(g_ui, ShuffleEnabled) == true) {
+        return true;
+    }
+
+    return false;
+}
+
+ModResult add_toggle(UiElementHandle pane, const char* label, ConfigVarHandle cvar, const char* help, UiPredicateFn is_disabled = nullptr) {
     UiControlDesc control = UI_CONTROL_DESC_INIT;
     control.kind = UI_CONTROL_TOGGLE;
     control.label = label;
     control.help_rml = help;
     control.binding = UI_BINDING_CONFIG_VAR;
     control.config_var = cvar;
-    control.on_pressed = on_press;
+    control.is_disabled = is_disabled;
     return add_control(pane, control);
 }
 
@@ -34,14 +50,8 @@ void on_eff_enables_close(ModContext*, UiWindowHandle, void*) {
     g_effEnablesWindow = 0;
 }
 
-void onEnableShuffleMode(ModContext*, void*) {
-    if (GET_CVAR_VALUE(g_ui, ShuffleEnabled) == true) {
-        SET_CVAR_VALUE(g_ui, BonkShuffleEnabled, false);
-    }
-}
-
 ModResult buildShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left, UiElementHandle, void*, ModError* error) {
-    ModResult result = add_toggle(left, "Enable Shuffle Mode", GET_CVAR(g_ui, ShuffleEnabled), "Enable regular Shuffle Mode", onEnableShuffleMode);
+    ModResult result = add_toggle(left, "Enable Shuffle Mode", GET_CVAR(g_ui, ShuffleEnabled), "Enable regular Shuffle Mode", isShuffleModeDisabled);
     if (result != MOD_OK) {
         return mods::set_error(error, result, "Error adding Shuffle Mode Enabled toggle");
     }
@@ -53,6 +63,7 @@ ModResult buildShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left,
     control.binding = UI_BINDING_CONFIG_VAR;
     control.config_var = GET_CVAR(g_ui, ShuffleTimer);
     control.min = 1;
+    control.max = 1800;
     result = add_control(left, control);
     if (result != MOD_OK) {
         return mods::set_error(error, result, "Error adding Shuffle Timer control");
@@ -70,6 +81,7 @@ ModResult buildShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left,
     control.binding = UI_BINDING_CONFIG_VAR;
     control.config_var = GET_CVAR(g_ui, RandTimerUpperLimit);
     control.min = 1;
+    control.max = 1800;
     result = add_control(left, control);
     if (result != MOD_OK) {
         return mods::set_error(error, result, "Error adding Random Timer Upper Limit control");
@@ -83,15 +95,8 @@ ModResult buildShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left,
     return result;
 }
 
-void onEnableBonkShuffleMode(ModContext*, void*) {
-    mods::log::debug("bonk shuffle enabled");
-    if (GET_CVAR_VALUE(g_ui, BonkShuffleEnabled) == true) {
-        SET_CVAR_VALUE(g_ui, ShuffleEnabled, false);
-    }
-}
-
 ModResult buildBonkShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left, UiElementHandle, void*, ModError* error) {
-    ModResult result = add_toggle(left, "Enable Bonk Shuffle Mode", GET_CVAR(g_ui, BonkShuffleEnabled), "Enable Bonk Shuffle Mode", onEnableBonkShuffleMode);
+    ModResult result = add_toggle(left, "Enable Bonk Shuffle Mode", GET_CVAR(g_ui, BonkShuffleEnabled), "Enable Bonk Shuffle Mode", isBonkShuffleModeDisabled);
     if (result != MOD_OK) {
         return mods::set_error(error, result, "Error adding Bonk Shuffle Mode Enabled toggle");
     }
@@ -180,14 +185,14 @@ ModResult buildEffSettingsTab(ModContext*, UiWindowHandle, UiElementHandle left,
     ADD_NUMBER_CONTROL("Zoom Out Percent", "Zoom percentage for 'Zoom Out' effect", GET_CVAR(g_ui, ZoomOutPercent), 100, 200,
                        "Error adding Zoom Out Percent control");
 
+    ADD_NUMBER_CONTROL("Top-Down Percent", "Zoom percentage for 'Top-Down' effect", GET_CVAR(g_ui, TopDownPercent), 100, 200,
+                       "Error adding Top-Down Percent control");
+
     ADD_NUMBER_CONTROL("Health Drain Timer", "Timer (in seconds) for 'Health Drain' effect", GET_CVAR(g_ui, HealthDrainTimer), 1, 1800,
                        "Error adding Health Drain Timer control");
 
     ADD_NUMBER_CONTROL("Health Drain Amount", "Amount of life that 'Health Drain' effect should drain", GET_CVAR(g_ui, HealthDrainAmount), 1, 80,
                        "Error adding Health Drain Amount control");
-
-    ADD_NUMBER_CONTROL("Spin Speed Scale", "Speed scale for 'Spin' effect", GET_CVAR(g_ui, SpinSpeed), 1, 5,
-                       "Error adding Spin Speed Scale control");
 
     ADD_NUMBER_CONTROL("Drops Damage Amount", "Damage Amount for 'Drops Damage' effect", GET_CVAR(g_ui, DropsDamageAmount), 1, 80,
                        "Error adding Drops Damage Amount control");

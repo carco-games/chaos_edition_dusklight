@@ -29,25 +29,26 @@ MOD_EXPORT ModResult mod_initialize(ModError* error) {
 }
 
 MOD_EXPORT ModResult mod_update(ModError*) {
-    // Check Shuffle Mode
-    if (GET_CVAR_VALUE(g_handlerP, ShuffleEnabled) == true) {
+    // Check Shuffle Mode and ensure both modes are not on
+    if (GET_CVAR_VALUE(g_handlerP, ShuffleEnabled)) {
         g_shuffleMode = SHUFFLE_REGULAR;
-    } else if (GET_CVAR_VALUE(g_handlerP, BonkShuffleEnabled) == true) {
+    } else if (GET_CVAR_VALUE(g_handlerP, BonkShuffleEnabled)) {
         g_shuffleMode = SHUFFLE_BONK;
     } else {
         g_shuffleMode = SHUFFLE_OFF;
     }
 
     // Reset timers if needed
-    if ((g_shuffleTimer == 0 && g_shuffleMode == SHUFFLE_REGULAR) || (g_bonkShuffleCooldown == 0 && !g_handler.getBonkShuffleReady())) {
+    if ((g_shuffleTimer == 0 && g_shuffleMode == SHUFFLE_REGULAR) || (g_bonkShuffleCooldown == 0 && !g_handler.getBonkShuffleReady() && g_shuffleMode == SHUFFLE_BONK)) {
         switch (g_shuffleMode) {
             case SHUFFLE_REGULAR:
                 if (GET_CVAR_VALUE(g_handlerP, EnableRandTimer) == true) {
                     std::mt19937 rng{std::random_device{}()};
                     std::uniform_int_distribution<int64_t> dist(1, GET_CVAR_VALUE(g_handlerP, RandTimerUpperLimit));
-                    g_shuffleTimer = dist(rng);
+                    g_shuffleTimer = dist(rng) * 30;
                 } else {
-                    g_shuffleTimer = GET_CVAR_VALUE(g_handlerP, ShuffleTimer);
+                    mods::log::debug("Setting shuffle timer");
+                    g_shuffleTimer = GET_CVAR_VALUE(g_handlerP, ShuffleTimer) * 30;
                 }
                 break;
 
@@ -67,7 +68,6 @@ MOD_EXPORT ModResult mod_update(ModError*) {
     }
 
     if (g_bonkShuffleCooldown != 0 && g_shuffleMode == SHUFFLE_BONK && !g_handler.getBonkShuffleReady()) {
-        mods::log::debug("Decreasing bonk shuffle timer");
         g_bonkShuffleCooldown--;
         if (g_bonkShuffleCooldown == 0) {
             mods::log::debug("bonk shuffle ready");
