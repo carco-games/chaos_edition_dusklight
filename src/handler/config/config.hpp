@@ -71,16 +71,13 @@ public:
     void setShuffle(bool value) { shuffle = value; }
     void shuffleEffects();
     void addExplosion(cXyz pos) {
-    mods::log::debug("Inside addExplosion");
+        mods::log::debug("Inside addExplosion");
 
-    auto timer = getExplodeEnemiesTimer();
+        mods::log::debug("Got explosion timer");
 
-    mods::log::debug("Got explosion timer");
+        activeExplosions.emplace_back(EnemyExplosion{pos, getExplodeEnemiesTimer() + 30});
 
-    activeExplosions.emplace_back(EnemyExplosion{pos, timer});
-
-    mods::log::debug("Explosion added to vector");
-        // activeExplosions.emplace_back(EnemyExplosion{pos, getExplodeEnemiesTimer() + 120});
+        mods::log::debug("Explosion added to vector");
     }
     std::vector<EnemyExplosion>& getActiveExplosions() { return activeExplosions; }
 private:

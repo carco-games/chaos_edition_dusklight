@@ -1,3 +1,5 @@
+#pragma once
+
 // Enemy Headers
 #include "d/actor/d_a_e_ai.h"
 #include "d/actor/d_a_e_ba.h"
@@ -48,7 +50,9 @@
 #include "d/actor/d_a_e_yd.h"
 #include "d/actor/d_a_e_yg.h"
 #include "d/actor/d_a_e_yh.h"
+#define ACT_ATTACK ACT_ATTACK_YK
 #include "d/actor/d_a_e_yk.h"
+#undef ACT_ATTACK
 #include "d/actor/d_a_e_ym.h"
 #include "d/actor/d_a_e_ymb.h"
 #include "d/actor/d_a_e_yr.h"
@@ -153,8 +157,6 @@ bool checkTileWormFall(daE_HZ_c* i_this) {
         void(e_ba_class*), i_this->mIsDying && (i_this->mKnockbackSpeed <= 1.0f ||  \
         i_this->mAcch.ChkWallHit()) && i_this->mHomeType == e_ba_class::HOME_APPEAR,\
         i_this->mEnemy.current.pos)                                                 \
-    X("src/d/actor/d_a_e_bs#damage_check", e_bs_class, StalkinDeath,                \
-        void(e_bs_class*), i_this->enemy.health <= 0, i_this->enemy.current.pos)    \
     X("src/d/actor/d_a_e_bu.cpp#bu_disappear", fopAc_ac_c,                          \
         BubbleDeath, void(fopAc_ac_c*), true, i_this->current.pos)                  \
     X("src/d/actor/d_a_e_db.cpp#e_db_e_dead", e_db_class,                           \
@@ -261,16 +263,3 @@ bool checkTileWormFall(daE_HZ_c* i_this) {
             [](class* i_this) { return (condition); },                              \
             [](class* i_this) { return (pos); });                                   \
     }
-
-template <typename T, typename Condition, typename Position>
-void onDeath(void* args, int64_t argIdx, Condition condition, Position pos) {
-    if (!GET_CVAR_VALUE(g_hooks, ExplodeEnemies)) {
-        return;
-    }
-
-    T* i_this = mods::arg<T*>(args, argIdx);
-
-    if (condition(i_this)) {
-        g_hooks->getConfigHandler()->addExplosion(pos(i_this));
-    }
-}

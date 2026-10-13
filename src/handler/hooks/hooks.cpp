@@ -27,6 +27,19 @@ DEFINE_HOOK(&dCamera_c::CalcTrimSize, CalcTrimSize);
 DEFINE_HOOK(&daItem_c::itemGet, ItemGet);
 DEFINE_HOOK(&daAlink_c::procFrontRollCrashInit, ProcFrontRollCrashInit);
 
+template <typename T, typename Condition, typename Position>
+void onDeath(void* args, int64_t argIdx, Condition condition, Position pos) {
+    if (!GET_CVAR_VALUE(g_hooks, ExplodeEnemies)) {
+        return;
+    }
+
+    T* i_this = mods::arg<T*>(args, argIdx);
+
+    
+    mods::log::debug("Adding explosion");
+    g_hooks->getConfigHandler()->addExplosion(pos(i_this));
+}
+
 #define ENEMY_DEATH_HOOKS                                   \
     ENEMY_DEATH_FUNCS(ENEMY_DEATH_HOOK);                    \
     ENEMY_STATIC_DEATH_FUNCS(ENEMY_STATIC_DEATH_HOOK);      \
