@@ -73,7 +73,7 @@ enum ShuffleMode {
 
 // Config Macros -----------------------------------------------------------------
 #define REGISTER_CVARS(name, type, default)                                         \
-    result = register_cvar<##type>("g_cvar" #name, default, g_cvar##name, error);   \
+    result = register_cvar<type>("g_cvar" #name, default, g_cvar##name, error);     \
     if (result != MOD_OK) {                                                         \
         return mods::set_error(error, result, "Failed to register cvar");           \
     }
