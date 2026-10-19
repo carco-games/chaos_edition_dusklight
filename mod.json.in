@@ -1,7 +1,7 @@
 {
-  "id": "com.example.my_mod",
-  "name": "My Mod",
+  "id": "carco_games.mods.chaos_edition",
+  "name": "Chaos Edition",
   "version": "@PROJECT_VERSION@",
-  "author": "You",
-  "description": "An example Dusklight mod"
+  "author": "Carco Games",
+  "description": "Dusklight: Chaos Edition"
 }
