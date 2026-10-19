@@ -139,9 +139,12 @@
 #define ADD_ENEMY_DEATH_HOOK(symbol, class, alias)          \
     PRE_HOOK(alias, on##alias, "Failed to hook " #symbol)
 
-#define ADD_ENEMY_DEATH_HOOKS                       \
-    ENEMY_DEATH_FUNCS(ADD_ENEMY_DEATH_HOOK);        \
-    ENEMY_STATIC_DEATH_FUNCS(ADD_ENEMY_DEATH_HOOK);
+#define ADD_ENEMY_STATIC_DEATH_HOOK(symbol, class, alias, params, base_member)  \
+    PRE_HOOK(alias, on##alias, "Failed to hook " #symbol)
+
+#define ADD_ENEMY_DEATH_HOOKS                               \
+    ENEMY_DEATH_FUNCS(ADD_ENEMY_DEATH_HOOK);                \
+    ENEMY_STATIC_DEATH_FUNCS(ADD_ENEMY_STATIC_DEATH_HOOK);
 
 #define ENEMY_DEATH_HOOK_FUNC(symbol, class, alias)                     \
     HookAction on##alias(ModContext*, void* args, void*, void*) {       \
