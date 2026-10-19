@@ -7,7 +7,7 @@ if (NOT DEFINED CMAKE_BUILD_TYPE AND NOT DEFINED ENV{CMAKE_BUILD_TYPE})
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type")
 endif ()
 
-project(chaos_edition VERSION 0.1.0 LANGUAGES CXX)
+project(chaos_edition VERSION 0.9.0 LANGUAGES CXX)
 
 # The Dusklight version to build against: a release tag (e.g. "v2.0.0") or a commit SHA.
 if (NOT DUSKLIGHT_VERSION)
@@ -51,17 +51,3 @@ add_mod(chaos_edition
 )
 
 target_link_libraries(chaos_edition PRIVATE xxHash::xxhash)
-
-# For Faster Testing
-add_custom_target(copy_mod ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-        "$ENV{APPDATA}/TwilitRealm/Dusklight/mods"
-
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_BINARY_DIR}/mods/chaos_edition.dusk"
-        "$ENV{APPDATA}/TwilitRealm/Dusklight/mods/chaos_edition.dusk"
-
-    DEPENDS package_mod
-
-    COMMENT "Copying chaos_edition.dusk to Dusklight mods folder"
-)

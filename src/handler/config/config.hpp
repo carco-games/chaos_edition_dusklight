@@ -65,19 +65,23 @@ public:
     struct EnemyExplosion {
         cXyz explosionPos;
         int64_t explosionTimer;
+        fpc_ProcID actorID;
     };
 
     bool getShuffle() { return shuffle; }
     void setShuffle(bool value) { shuffle = value; }
     void shuffleEffects();
-    void addExplosion(cXyz pos) {
-        mods::log::debug("Inside addExplosion");
+    void addExplosion(cXyz pos, fpc_ProcID actor_id) {
+        bool alreadyAddedExplosion = std::any_of(
+            activeExplosions.begin(), activeExplosions.end(),
+            [actor_id](const EnemyExplosion& explosion) {
+                return explosion.actorID == actor_id;
+            }
+        );
 
-        mods::log::debug("Got explosion timer");
-
-        activeExplosions.emplace_back(EnemyExplosion{pos, getExplodeEnemiesTimer() + 30});
-
-        mods::log::debug("Explosion added to vector");
+        if (!alreadyAddedExplosion) {
+            activeExplosions.emplace_back(EnemyExplosion{pos, getExplodeEnemiesTimer() + 30, actor_id});
+        }
     }
     std::vector<EnemyExplosion>& getActiveExplosions() { return activeExplosions; }
 private:

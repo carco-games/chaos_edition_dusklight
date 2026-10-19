@@ -59,7 +59,7 @@ ModResult buildShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left,
     UiControlDesc control = UI_CONTROL_DESC_INIT;
     control.kind = UI_CONTROL_NUMBER;
     control.label = "Shuffle Timer";
-    control.help_rml = "Timer denoting time between effect shuffles";
+    control.help_rml = "Time (in seconds) between effect shuffles";
     control.binding = UI_BINDING_CONFIG_VAR;
     control.config_var = GET_CVAR(g_ui, ShuffleTimer);
     control.min = 1;
@@ -85,6 +85,19 @@ ModResult buildShuffleModeTab(ModContext*, UiWindowHandle, UiElementHandle left,
     result = add_control(left, control);
     if (result != MOD_OK) {
         return mods::set_error(error, result, "Error adding Random Timer Upper Limit control");
+    }
+
+    control = UI_CONTROL_DESC_INIT;
+    control.kind = UI_CONTROL_NUMBER;
+    control.label = "Random Timer Lower Limit";
+    control.help_rml = "Lower limit (in seconds) for random shuffle timer";
+    control.binding = UI_BINDING_CONFIG_VAR;
+    control.config_var = GET_CVAR(g_ui, RandTimerLowerLimit);
+    control.min = 1;
+    control.max = 1800;
+    result = add_control(left, control);
+    if (result != MOD_OK) {
+        return mods::set_error(error, result, "Error adding Random Timer Lower Limit control");
     }
 
     result = add_toggle(left, "Shuffle Mode Toasts", GET_CVAR(g_ui, ShuffleToasts), "Enable toasts for regular Shuffle Mode");

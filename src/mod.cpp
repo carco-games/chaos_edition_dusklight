@@ -44,7 +44,7 @@ MOD_EXPORT ModResult mod_update(ModError*) {
             case SHUFFLE_REGULAR:
                 if (GET_CVAR_VALUE(g_handlerP, EnableRandTimer) == true) {
                     std::mt19937 rng{std::random_device{}()};
-                    std::uniform_int_distribution<int64_t> dist(1, GET_CVAR_VALUE(g_handlerP, RandTimerUpperLimit));
+                    std::uniform_int_distribution<int64_t> dist(GET_CVAR_VALUE(g_handlerP, RandTimerLowerLimit), GET_CVAR_VALUE(g_handlerP, RandTimerUpperLimit));
                     g_shuffleTimer = dist(rng) * 30;
                 } else {
                     mods::log::debug("Setting shuffle timer");
@@ -92,6 +92,7 @@ MOD_EXPORT ModResult mod_update(ModError*) {
 
         if (iterator->explosionTimer == 0) {
             dBomb_c::createNormalBombExplode(&iterator->explosionPos);
+            mods::log::debug("Erasing active explosion");
             iterator = explosions.erase(iterator);
         } else {
             ++iterator;

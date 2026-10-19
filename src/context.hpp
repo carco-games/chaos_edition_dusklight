@@ -142,7 +142,7 @@ enum ShuffleMode {
     X(HealthDrainAmount, int64_t, 1)    \
     X(DropsDamageAmount, int64_t, 4)    \
     X(ExplodeEnemiesTimer, int64_t, 30) \
-    X(RandoSpawnsChance, int64_t, 15)   \
+    X(RandoSpawnsChance, int64_t, 5)    \
 
 #define EFFECT_TOGGLES(X)                                                                           \
     X(FastLink, "Fast Link", "Makes Link Faster")                                                   \
@@ -166,6 +166,7 @@ enum ShuffleMode {
     X(ShuffleTimer, int64_t, 120)           \
     X(EnableRandTimer, bool, false)         \
     X(RandTimerUpperLimit, int64_t, 180)    \
+    X(RandTimerLowerLimit, int64_t, 1)      \
     X(ShuffleToasts, bool, false)           \
     X(BonkShuffleEnabled, bool, false)      \
     X(BonkShuffleCooldown, int64_t, 300)    \

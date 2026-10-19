@@ -18,7 +18,8 @@ DEFINE_HOOK(&daAlink_c::procMove, LinkProcMove);
 DEFINE_HOOK(&daAlink_c::procFrontRollInit, LinkFrontRollInit);
 DEFINE_HOOK(&daAlink_c::damageMagnification, LinkDamageMagnification);
 DEFINE_HOOK(&daAlink_c::setDamagePoint, SetDamagePoint);
-DEFINE_HOOK(&daAlink_c::modelCallBack, SetMatrix);
+DEFINE_HOOK(&daAlink_c::modelCallBack, ModelCallback);
+DEFINE_HOOK(&daAlink_c::wolfModelCallBack, WolfModelCallback);
 DEFINE_HOOK(&daAlink_c::setIceSlipSpeed, SetIceSlipSpeed);
 DEFINE_HOOK(&daAlink_c::execute, Execute);
 DEFINE_HOOK(&dCamera_c::Run, CameraRun);
@@ -27,17 +28,12 @@ DEFINE_HOOK(&dCamera_c::CalcTrimSize, CalcTrimSize);
 DEFINE_HOOK(&daItem_c::itemGet, ItemGet);
 DEFINE_HOOK(&daAlink_c::procFrontRollCrashInit, ProcFrontRollCrashInit);
 
-template <typename T, typename Condition, typename Position>
-void onDeath(void* args, int64_t argIdx, Condition condition, Position pos) {
+void onDeath(fopAc_ac_c* enemy) {
     if (!GET_CVAR_VALUE(g_hooks, ExplodeEnemies)) {
         return;
     }
-
-    T* i_this = mods::arg<T*>(args, argIdx);
-
-    
     mods::log::debug("Adding explosion");
-    g_hooks->getConfigHandler()->addExplosion(pos(i_this));
+    g_hooks->getConfigHandler()->addExplosion(enemy->current.pos, fopAcM_GetID(enemy));
 }
 
 #define ENEMY_DEATH_HOOKS                                   \
@@ -56,12 +52,18 @@ void onProcMove(ModContext*, void* args, void*, void*) {
 }
 
 static std::vector<s16> possibleSpawns = {
-    fpcNm_NPC_COACH_e, fpcNm_NPC_THEB_e, fpcNm_NPC_KS_e, fpcNm_NPC_ZRA_e, fpcNm_NPC_TK_e, fpcNm_NPC_WORM_e, fpcNm_NPC_TKJ2_e, fpcNm_NPC_SQ_e, fpcNm_NPC_NE_e, fpcNm_NPC_TR_e, fpcNm_NPC_LF_e,
-    fpcNm_NPC_FISH_e, fpcNm_NPC_DU_e, fpcNm_NPC_GND_e, fpcNm_NPC_GRA_e, fpcNm_NPC_GRC_e, fpcNm_NPC_GRD_e, fpcNm_NPC_GRM_e, fpcNm_NPC_GRMC_e, fpcNm_NPC_GRO_e, fpcNm_NPC_GRR_e, fpcNm_NPC_GRS_e,
-    fpcNm_NPC_GRZ_e, fpcNm_NPC_YAMID_e, fpcNm_NPC_YAMIT_e, fpcNm_NPC_YAMIS_e, fpcNm_NPC_BLUENS_e, fpcNm_NPC_KAKASHI_e, fpcNm_NPC_ARU_e, fpcNm_NPC_BANS_e, fpcNm_NPC_BESU_e,
-    fpcNm_NPC_BOU_e, fpcNm_NPC_BOU_S_e, fpcNm_NPC_CLERKA_e, fpcNm_NPC_CLERKB_e, fpcNm_NPC_CLERKT_e, fpcNm_NPC_DOC_e, fpcNm_NPC_GWOLF_e, fpcNm_NPC_LEN_e, fpcNm_NPC_LUD_e, fpcNm_NPC_FAIRY_SEIREI_e,
-    fpcNm_NPC_FAIRY_e, fpcNm_NPC_HANJO_e, fpcNm_NPC_HENNA_e, fpcNm_NPC_HOZ_e, fpcNm_NPC_JAGAR_e, fpcNm_NPC_KKRI_e, fpcNm_NPC_KN_e,
-    // finish list
+    fpcNm_NPC_KS_e, fpcNm_NPC_ZRA_e, fpcNm_NPC_WORM_e, fpcNm_NPC_TKJ2_e, fpcNm_NPC_SQ_e, fpcNm_NPC_NE_e, fpcNm_NPC_TR_e,
+    fpcNm_NPC_DU_e, fpcNm_NPC_GND_e, fpcNm_NPC_GRA_e, fpcNm_NPC_GRC_e, fpcNm_NPC_GRM_e, fpcNm_NPC_GRO_e, fpcNm_NPC_GRR_e,
+    fpcNm_NPC_GRS_e, fpcNm_NPC_YAMID_e, fpcNm_NPC_YAMIT_e, fpcNm_NPC_YAMIS_e, fpcNm_NPC_KAKASHI_e, fpcNm_NPC_BOU_e,
+    fpcNm_NPC_CLERKA_e, fpcNm_NPC_CLERKB_e, fpcNm_NPC_CLERKT_e, fpcNm_NPC_HANJO_e, fpcNm_NPC_HENNA_e, fpcNm_NPC_HOZ_e,
+    fpcNm_NPC_JAGAR_e, fpcNm_NPC_KKRI_e, fpcNm_NPC_KNJ_e, fpcNm_NPC_KOLIN_e, fpcNm_NPC_KYURY_e, fpcNm_NPC_MIDP_e, fpcNm_NPC_MOI_e,
+    fpcNm_NPC_RACA_e, fpcNm_NPC_SARU_e, fpcNm_NPC_SEIB_e, fpcNm_NPC_SEIC_e, fpcNm_NPC_SEID_e, fpcNm_NPC_SEIRA_e, fpcNm_NPC_SERA2_e,
+    fpcNm_NPC_SHAMAN_e, fpcNm_NPC_SOLA_e, fpcNm_NPC_PACHI_BESU_e, fpcNm_NPC_PACHI_MARO_e, fpcNm_NPC_THE_e, fpcNm_NPC_TKJ_e,
+    fpcNm_NPC_TKC_e, fpcNm_NPC_TOBY_e, fpcNm_NPC_URI_e, fpcNm_NPC_YELIA_e, fpcNm_NPC_YKM_e, fpcNm_NPC_YKW_e, fpcNm_NPC_ZANB_e,
+    fpcNm_NPC_ZANT_e, fpcNm_NPC_ZELDA_e, fpcNm_NPC_ZELRO_e, fpcNm_NPC_ZRC_e, fpcNm_NPC_ZRZ_e, fpcNm_ZRA_MARK_e, fpcNm_NPC_SOLDIERa_e,
+    fpcNm_NPC_SOLDIERb_e, fpcNm_NPC_PASSER_e, fpcNm_NPC_PASSER2_e, fpcNm_NPC_POST_e, fpcNm_NPC_POUYA_e, fpcNm_NPC_ASH_e, fpcNm_NPC_SHAD_e,
+    fpcNm_NPC_RAFREL_e, fpcNm_NPC_MOIR_e, fpcNm_NPC_DOORBOY_e, fpcNm_NPC_PRAYER_e, fpcNm_NPC_KASIKYU_e, fpcNm_NPC_KASIMICH_e, 
+    fpcNm_NPC_INS_e, fpcNm_NPC_SHOP0_e,
 };
 
 // Replace function for front roll init. Replace is used to direclty modify roll speed inside the function.
@@ -135,7 +137,13 @@ void onProcFrontRollInit(ModContext*, void* args, void* retval, void*) {
 
     // Handle Random Spawns
     if (GET_CVAR_VALUE(g_hooks, RandoSpawns)) {
-
+        std::mt19937 rng{std::random_device{}()};
+        if (std::uniform_int_distribution<>(1, 100)(rng) <= GET_CVAR_VALUE(g_hooks, RandoSpawnsChance)) {
+            std::uniform_int_distribution<size_t> dist(0, possibleSpawns.size() - 1);
+            s16 randomSpawn = possibleSpawns[dist(rng)];
+            mods::log::debug("Spawning actor: {}", randomSpawn);
+            fopAcM_create(randomSpawn, 0, &link->current.pos, fopAcM_GetRoomNo(link), NULL, NULL, -1);
+        }
     }
 
     if (retval != nullptr) {
@@ -190,8 +198,28 @@ HookAction onSetDamagePoint(ModContext*, void* args, void* retval, void*) {
 }
 
 // Tiny / Big Link
-void onSetMatrix(ModContext*, void* args, void*, void*) {
+void onModelCallback(ModContext*, void* args, void*, void*) {
     if (GET_CVAR_VALUE(g_hooks, TinyLink) == false && GET_CVAR_VALUE(g_hooks, BigLink) == false) {
+        return;
+    }
+
+    daAlink_c* link = mods::arg<daAlink_c*>(args, 0);
+    int i_jointNo = mods::arg<int>(args, 1);
+    f32 scale;
+    if (GET_CVAR_VALUE(g_hooks, TinyLink) == true) {
+        scale = 0.7f / GET_CVAR_VALUE(g_hooks, TinyLinkScale);
+    } else if (GET_CVAR_VALUE(g_hooks, BigLink) == true) {
+        scale = 1.2f * GET_CVAR_VALUE(g_hooks, BigLinkScale);
+    }
+
+    MtxP mtx = link->mpLinkModel->getAnmMtx(i_jointNo);
+    mDoMtx_stack_c::copy(mtx);
+    mDoMtx_stack_c::scaleM(scale, scale, scale);
+    cMtx_copy(mDoMtx_stack_c::get(), mtx);
+}
+
+void onWolfModelCallback(ModContext*, void* args, void*, void*) {
+    if (!GET_CVAR_VALUE(g_hooks, TinyLink) && !GET_CVAR_VALUE(g_hooks, BigLink)) {
         return;
     }
 
@@ -324,26 +352,11 @@ void onItemGet(ModContext*, void* args, void*, void*) {
 
 // Bonk Shuffle
 uint32_t g_enemyID = 0;
-s16 g_spawn = 0;
 void onProcFrontRollCrashInit(ModContext*, void* args, void*, void*) {
     daAlink_c* link = mods::arg<daAlink_c*>(args, 0);
     if (g_hooks->getBonkShuffleReady()) {
         g_hooks->getConfigHandler()->setShuffle(true);
         g_hooks->setBonkShuffleReady(false);
-    }
-
-    if (GET_CVAR_VALUE(g_hooks, RandoSpawns)) {
-        // std::mt19937 rng{std::random_device{}()};
-        // std::uniform_int_distribution<size_t> dist(0, possibleSpawns.size() - 1);
-        // s16 randomSpawn = possibleSpawns[dist(rng)];
-        // mods::log::debug("Spawning actor: {}", randomSpawn);
-        // fopAcM_create(randomSpawn, 0, &link->current.pos, fopAcM_GetRoomNo(link), NULL, NULL, -1);
-
-        // For testing
-        if (g_spawn < possibleSpawns.size()) {
-            fopAcM_create(possibleSpawns[g_spawn], 0, &link->current.pos, fopAcM_GetRoomNo(link), NULL, NULL, -1);
-            g_spawn++;
-        }
     }
 }
 
@@ -362,7 +375,8 @@ ModResult HooksHandler::initialize(ConfigHandler* config_handler, ModError* erro
     REPLACE_HOOK(LinkFrontRollInit, onProcFrontRollInit, "Failed to hook daAlink_c::procFrontRollInit");
     PRE_HOOK(LinkDamageMagnification, onDamageMagnification, "Failed to hook daAlink_c::damageMagnification");
     PRE_HOOK(SetDamagePoint, onSetDamagePoint, "Failed to hook daAlink_c::setDamagePoint");
-    POST_HOOK(SetMatrix, onSetMatrix, "Failed to hook daAlink_c::setMatrix");
+    POST_HOOK(ModelCallback, onModelCallback, "Failed to hook daAlink_c::modelCallback");
+    POST_HOOK(WolfModelCallback, onWolfModelCallback, "Failed to hook daAlink_c::wolfModelCallback");
     PRE_HOOK(SetIceSlipSpeed, onSetIceSlipSpeed, "Failed to hook daAlink_c::setIceSlipSpeed");
     POST_HOOK(Execute, onExecute, "Failed to hook daAlink_c::execute");
     POST_HOOK(CameraRun, onCameraRun, "Failed to hook dCamera_c::Run");

@@ -21,7 +21,7 @@
     }
 
 #define ADD_ENEMY_DEATH_HOOK(symbol, class, alias)          \
-    POST_HOOK(alias, on##alias, "Failed to hook " #symbol)
+    PRE_HOOK(alias, on##alias, "Failed to hook " #symbol)
 
 #define ADD_ENEMY_DEATH_HOOKS                       \
     ENEMY_DEATH_FUNCS(ADD_ENEMY_DEATH_HOOK);        \

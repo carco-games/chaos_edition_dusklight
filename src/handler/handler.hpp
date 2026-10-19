@@ -1,5 +1,4 @@
 #include "../context.hpp"
-#include "config/config.hpp"
 #include "hooks/hooks.hpp"
 #include "ui/ui.hpp"
 
