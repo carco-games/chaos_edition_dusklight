@@ -20,13 +20,6 @@
         return mods::set_error(error, result, error_msg);   \
     }
 
-#define ADD_ENEMY_DEATH_HOOK(symbol, class, alias)          \
-    PRE_HOOK(alias, on##alias, "Failed to hook " #symbol)
-
-#define ADD_ENEMY_DEATH_HOOKS                       \
-    ENEMY_DEATH_FUNCS(ADD_ENEMY_DEATH_HOOK);        \
-    ENEMY_STATIC_DEATH_FUNCS(ADD_ENEMY_DEATH_HOOK);
-
 class ColorHooks;
 
 class HooksHandler {
