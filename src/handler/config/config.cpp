@@ -13,11 +13,11 @@ CHAOS_EFFECTS(EFFECT_CVAR);
 EFFECT_SETTINGS(CVAR);
 SHUFFLE_SETTINGS(CVAR);
 
-#define MAP_EFFECT_CVAR(name)               \
-    name = &g_cvar##name;                   \
+#define MAP_EFFECT_CVAR(name, type, default)    \
+    name = &g_cvar##name;                       \
     name##Shuffle = &g_cvar##name##Shuffle;
 
-#define MAP_CVAR(name)      \
+#define MAP_CVAR(name, type, default)   \
     name = &g_cvar##name;
 
 ModResult ConfigHandler::initialize(ModError* error) {
