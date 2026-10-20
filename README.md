@@ -3,7 +3,7 @@
 Explore Hyrule with this new customizable nightmare!
 
 ## Mod Showcase:
-[Twilight Princess: Chaos Edition](https://youtu.be/edbCCfYhLyA)
+[Twilight Princess: Chaos Edition](https://youtu.be/K1nGlaGIS3M)
 
 ## Featuring 15 Chaos Effects!
 
